@@ -6,15 +6,17 @@ on:
     #   - main # Runs on push to main branch
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   changelog:
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        
+
       - name: "✏️ Generate release changelog"
         uses: janheinrichmerker/action-github-changelog-generator@v2.3
         with:
@@ -27,5 +29,5 @@ jobs:
             "github-actions[bot]@users.noreply.github.com"
           git add CHANGELOG.md
           git commit -m \
-            "🔄 Update changelog [skip ci]" || echo "No changes to commit"
+            "chore: Update changelog [skip ci]" || echo "No changes to commit"
           git push
