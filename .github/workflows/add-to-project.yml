@@ -19,7 +19,7 @@ jobs:
         id: get-org-name
         run: |
           # Extract the organization name dynamically from GITHUB_REPOSITORY
-          ORG_NAME=$(echo "${GITHUB_REPOSITORY}" | cut -d'/' -f1)
+          ORG_NAME="$(echo "${GITHUB_REPOSITORY}" | cut -d'/' -f1)"
           echo "ORG_NAME=${ORG_NAME}" >> $GITHUB_ENV
 
       - name: Add issue to Org project
