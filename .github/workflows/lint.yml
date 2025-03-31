@@ -33,7 +33,6 @@ jobs:
           # To report GitHub Actions status checks
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-          
   fix-lint-issues:
     permissions:
       # To write linting fixes
