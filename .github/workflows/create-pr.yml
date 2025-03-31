@@ -1,0 +1,86 @@
+---
+name: Auto Create Pull Request
+
+on:
+  create:
+    branches:
+
+jobs:
+  create-pr:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get list of issues
+        id: get-issues
+        run: |
+          # Fetch issues from the repository using GitHub API
+          issues=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/issues?state=open")
+
+          # Parse issues and output them as a JSON object
+          echo "::set-output name=issues::$issues"
+
+      - name: Find matching issue for PR
+        id: find-issue
+        run: |
+          # Extract the branch name
+          BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+          # Remove 'development/' prefix from the branch name
+          ISSUE_BRANCH_NAME=${BRANCH_NAME#development/}
+
+          # Clean the branch name by removing spaces and hyphens
+          CLEAN_BRANCH_NAME=$(echo "$ISSUE_BRANCH_NAME" | tr -d '[:space:]' | tr -d '-')
+
+          # Get the list of issues from the previous step
+          ISSUES="${{ steps.get-issues.outputs.issues }}"
+
+          # Loop through all issues and try to match the cleaned branch name with the issue title
+          MATCHED_ISSUE=""
+          MATCHED_TITLE=""
+          MATCHED_LABELS=""
+          MATCHED_ASSIGNEES=""
+
+          for ISSUE in $(echo "$ISSUES" | jq -r '.[] | @base64'); do
+            _jq() {
+              echo ${ISSUE} | base64 --decode | jq -r ${1}
+            }
+
+            # Get the issue title, number, labels, and assignees
+            ISSUE_TITLE=$(_jq '.title')
+            ISSUE_NUMBER=$(_jq '.number')
+            ISSUE_LABELS=$(_jq '.labels | map(.name) | join(", ")')
+            ISSUE_ASSIGNEES=$(_jq '.assignees | map(.login) | join(", ")')
+
+            # Clean the issue title by removing spaces and hyphens
+            CLEAN_ISSUE_TITLE=$(echo "$ISSUE_TITLE" | tr -d '[:space:]' | tr -d '-')
+
+            # Compare branch name with issue title (case-insensitive)
+            if [[ "${CLEAN_BRANCH_NAME,,}" == "${CLEAN_ISSUE_TITLE,,}" ]]; then
+              MATCHED_ISSUE=$ISSUE_NUMBER
+              MATCHED_TITLE=$ISSUE_TITLE
+              MATCHED_LABELS=$ISSUE_LABELS
+              MATCHED_ASSIGNEES=$ISSUE_ASSIGNEES
+              break
+            fi
+          done
+
+          # Output the matched issue number, title, labels, and assignees
+          echo "::set-output name=matched_issue::$MATCHED_ISSUE"
+          echo "::set-output name=matched_title::$MATCHED_TITLE"
+          echo "::set-output name=matched_labels::$MATCHED_LABELS"
+          echo "::set-output name=matched_assignees::$MATCHED_ASSIGNEES"
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: ${{ github.ref_name }} # The new branch created
+          title: ${{ steps.find-issue.outputs.matched_title }} # The PR title matches the issue title
+          body: |
+            This PR addresses issue #${{ steps.find-issue.outputs.matched_issue }}: ${{ steps.find-issue.outputs.matched_title }}.
+            Closes #${{ steps.find-issue.outputs.matched_issue }}.
+          labels: ${{ steps.find-issue.outputs.matched_labels }} # Copy labels from the matched issue
+          assignees: ${{ steps.find-issue.outputs.matched_assignees }} # Copy assignees from the matched issue
+          draft: true
