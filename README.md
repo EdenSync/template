@@ -10,6 +10,7 @@ EdenSync is a smart plant monitoring system designed to integrate seamlessly wit
 
 Each sensor node is responsible for collecting environmental data and transmitting it to the bridge.
 
+
 #### **Microcontroller**
 
 - **NRF52 Series**: Chosen for Thread support, providing low-power, reliable communication.
