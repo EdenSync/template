@@ -9,10 +9,31 @@ permissions:
   contents: read
 
 jobs:
-  lint:
-    # Super-linter workflow running in check only mode
-    # See https://github.com/super-linter/super-linter#get-started
+  build:
+    name: Lint
+    runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+      packages: read
+      # To report GitHub Actions status checks
+      statuses: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # super-linter needs the full git history to get the
+          # list of files that changed across commits
+          fetch-depth: 0
+
+      - name: Super-linter
+        uses: super-linter/super-linter/slim@v7.3.0 # x-release-please-version
+        env:
+          # To report GitHub Actions status checks
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+          
   fix-lint-issues:
     permissions:
       # To write linting fixes
@@ -25,7 +46,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Super-Linter
-        uses: super-linter/super-linter@v7.3.0 # x-release-please-version
+        uses: super-linter/super-linter/slim@v7.3.0 # x-release-please-version
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Set your fix mode variables to true
@@ -40,7 +61,7 @@ jobs:
         # - Pull requests
         # - Not on the default branch
         if: >
-          github.event_name == 'pull_request' &&
+          github.event.action == 'synchronize' &&
           github.ref_name != github.event.repository.default_branch
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
