@@ -18,7 +18,7 @@ jobs:
       - name: Get list of issues
         id: get-issues
         run: |
-          ISSUES_JSON=$(gh api "repos/${{ github.repository }}/issues" --jq '.')
+          ISSUES_JSON=$(gh api "repos/EdenSync/sensor-hardware/issues")
           echo "issues=$(echo "$ISSUES_JSON" | jq -c .)" >> "$GITHUB_OUTPUT"
         env:
           GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
@@ -29,9 +29,10 @@ jobs:
           # Extract branch name
           BRANCH_NAME="${GITHUB_REF#refs/heads/}"
           ISSUE_BRANCH_NAME="${BRANCH_NAME#development/}"
-
+          echo "Branch Name: $BRANCH_NAME"
           # Clean the branch name (remove spaces and hyphens)
           CLEAN_BRANCH_NAME=$(echo "$ISSUE_BRANCH_NAME" | tr -d '[:space:]-')
+          echo "Cleaned Branch Name: $CLEAN_BRANCH_NAME"
 
           # Get list of issues
           ISSUES_JSON='${{ steps.get-issues.outputs.issues }}'
@@ -44,13 +45,14 @@ jobs:
           # Loop through issues
           while IFS= read -r ISSUE; do
             ISSUE_TITLE=$(echo "$ISSUE" | jq -r '.title')
+            echo "Issue Title: $ISSUE_TITLE"
             ISSUE_NUMBER=$(echo "$ISSUE" | jq -r '.number')
             ISSUE_LABELS=$(echo "$ISSUE" | jq -c '[.labels[].name] | join(",")')
             ISSUE_ASSIGNEES=$(echo "$ISSUE" | jq -c '[.assignees[].login] | join(",")')
 
             CLEAN_ISSUE_TITLE=$(echo "$ISSUE_TITLE" | tr -d '[:space:]-')
-
-            if [[ "${CLEAN_BRANCH_NAME,,}" == "${CLEAN_ISSUE_TITLE,,}" ]]; then
+            echo "Cleaned Issue Title: $CLEAN_ISSUE_TITLE"
+            if [[ "$CLEAN_BRANCH_NAME" =~ "$CLEAN_ISSUE_TITLE" ]]; then
               MATCHED_ISSUE="$ISSUE_NUMBER"
               MATCHED_TITLE="$ISSUE_TITLE"
               MATCHED_LABELS="$ISSUE_LABELS"
