@@ -92,3 +92,4 @@ jobs:
           labels: "${{ steps.find-issue.outputs.matched_labels }}"
           assignees: "${{ steps.find-issue.outputs.matched_assignees }}"
           draft: true
+          base: main
