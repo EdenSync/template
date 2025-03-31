@@ -2,9 +2,8 @@
 name: Changelog
 on:
   push:
-    branches:
-      - main # Runs on push to main branch
-  workflow_dispatch: # Allows manual trigger
+    # branches:
+    #   - main # Runs on push to main branch
 
 permissions:
   contents: write
