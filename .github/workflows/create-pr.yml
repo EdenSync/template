@@ -18,7 +18,21 @@ jobs:
       - name: Get list of issues
         id: get-issues
         run: |
-          ISSUES_JSON=$(gh api "repos/EdenSync/sensor-hardware/issues")
+          # Get owner and repo automatically
+          REPO_INFO=$(gh repo view --json owner,name)
+          OWNER=$(echo "$REPO_INFO" | jq -r '.owner.login')
+          REPO=$(echo "$REPO_INFO" | jq -r '.name')
+
+          echo "Fetching issues for $OWNER/$REPO"
+
+          # Fetch issues
+          ISSUES_JSON=$(gh api "repos/$OWNER/$REPO/issues")
+
+          # Debug output
+          echo "Raw Issues JSON:"
+          echo "$ISSUES_JSON" | jq
+
+          # Save to output
           echo "issues=$(echo "$ISSUES_JSON" | jq -c .)" >> "$GITHUB_OUTPUT"
         env:
           GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"

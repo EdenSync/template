@@ -27,7 +27,7 @@ jobs:
           # list of files that changed across commits
           fetch-depth: 0
       - name: Ensure YAML lint config is available
-        run: ls; cp .github/.yamllint.yml /action/lib/.automation/.yamllint.yml
+        run: ls -la; cp .github/.yamllint.yml /action/lib/.automation/.yamllint.yml;find . -name ".yamllint.yml"
       - name: Super-linter
         uses: super-linter/super-linter/slim@v7.3.0 # x-release-please-version
         env:
