@@ -1,8 +1,11 @@
----
 name: Auto Create Pull Request
 
 on:
   create:
+
+permissions:
+  contents: read  # Only read access to repo contents
+  pull-requests: write  # Only grant write access to PRs (not all contents)
 
 jobs:
   create-pr:
@@ -15,71 +18,62 @@ jobs:
       - name: Get list of issues
         id: get-issues
         run: |
-          # Fetch issues from the repository using GitHub API
-          issues=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            "https://api.github.com/repos/${{ github.repository }}/issues?state=open")
-
-          # Parse issues and output them as a JSON object
-          echo "issues=$issues" >> $GITHUB_OUTPUT
+          ISSUES_JSON=$(gh api "repos/${{ github.repository }}/issues" --jq '.')
+          echo "issues=$(echo "$ISSUES_JSON" | jq -c .)" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
       - name: Find matching issue for PR
         id: find-issue
         run: |
-          # Extract the branch name
+          # Extract branch name
           BRANCH_NAME="${GITHUB_REF#refs/heads/}"
-          # Remove 'development/' prefix from the branch name
-          ISSUE_BRANCH_NAME=${BRANCH_NAME#development/}
+          ISSUE_BRANCH_NAME="${BRANCH_NAME#development/}"
 
-          # Clean the branch name by removing spaces and hyphens
-          CLEAN_BRANCH_NAME=$(echo "$ISSUE_BRANCH_NAME" | tr -d '[:space:]' | tr -d '-')
+          # Clean the branch name (remove spaces and hyphens)
+          CLEAN_BRANCH_NAME=$(echo "$ISSUE_BRANCH_NAME" | tr -d '[:space:]-')
 
-          # Get the list of issues from the previous step
-          ISSUES="${{ steps.get-issues.outputs.issues }}"
+          # Get list of issues
+          ISSUES_JSON='${{ steps.get-issues.outputs.issues }}'
 
-          # Loop through all issues and try to match the cleaned branch name with the issue title
           MATCHED_ISSUE=""
           MATCHED_TITLE=""
           MATCHED_LABELS=""
           MATCHED_ASSIGNEES=""
 
-          for ISSUE in $(echo "$ISSUES" | jq -r '.[] | @base64'); do
-            _jq() {
-              echo ${ISSUE} | base64 --decode | jq -r ${1}
-            }
+          # Loop through issues
+          while IFS= read -r ISSUE; do
+            ISSUE_TITLE=$(echo "$ISSUE" | jq -r '.title')
+            ISSUE_NUMBER=$(echo "$ISSUE" | jq -r '.number')
+            ISSUE_LABELS=$(echo "$ISSUE" | jq -c '[.labels[].name] | join(",")')
+            ISSUE_ASSIGNEES=$(echo "$ISSUE" | jq -c '[.assignees[].login] | join(",")')
 
-            # Get the issue title, number, labels, and assignees
-            ISSUE_TITLE=$(_jq '.title')
-            ISSUE_NUMBER=$(_jq '.number')
-            ISSUE_LABELS=$(_jq '.labels | map(.name) | join(", ")')
-            ISSUE_ASSIGNEES=$(_jq '.assignees | map(.login) | join(", ")')
+            CLEAN_ISSUE_TITLE=$(echo "$ISSUE_TITLE" | tr -d '[:space:]-')
 
-            # Clean the issue title by removing spaces and hyphens
-            CLEAN_ISSUE_TITLE=$(echo "$ISSUE_TITLE" | tr -d '[:space:]' | tr -d '-')
-
-            # Compare branch name with issue title (case-insensitive)
             if [[ "${CLEAN_BRANCH_NAME,,}" == "${CLEAN_ISSUE_TITLE,,}" ]]; then
-              MATCHED_ISSUE=$ISSUE_NUMBER
-              MATCHED_TITLE=$ISSUE_TITLE
-              MATCHED_LABELS=$ISSUE_LABELS
-              MATCHED_ASSIGNEES=$ISSUE_ASSIGNEES
+              MATCHED_ISSUE="$ISSUE_NUMBER"
+              MATCHED_TITLE="$ISSUE_TITLE"
+              MATCHED_LABELS="$ISSUE_LABELS"
+              MATCHED_ASSIGNEES="$ISSUE_ASSIGNEES"
               break
             fi
-          done
+          done < <(echo "$ISSUES_JSON" | jq -c '.[]')
 
-          # Output the matched issue number, title, labels, and assignees
-          echo "matched_issue=$MATCHED_ISSUE" >> $GITHUB_OUTPUT
-          echo "matched_title=$MATCHED_TITLE" >> $GITHUB_OUTPUT
-          echo "matched_labels=$MATCHED_LABELS" >> $GITHUB_OUTPUT
-          echo "matched_assignees=$MATCHED_ASSIGNEES" >> $GITHUB_OUTPUT
+          {
+            echo "matched_issue=$MATCHED_ISSUE"
+            echo "matched_title=$MATCHED_TITLE"
+            echo "matched_labels=$MATCHED_LABELS"
+            echo "matched_assignees=$MATCHED_ASSIGNEES"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v7
         with:
-          branch: ${{ github.ref_name }} # The new branch created
-          title: ${{ steps.find-issue.outputs.matched_title }} # The PR title matches the issue title
+          branch: "${{ github.ref_name }}"
+          title: "${{ steps.find-issue.outputs.matched_title }}"
           body: |
             This PR addresses issue #${{ steps.find-issue.outputs.matched_issue }}: ${{ steps.find-issue.outputs.matched_title }}.
             Closes #${{ steps.find-issue.outputs.matched_issue }}.
-          labels: ${{ steps.find-issue.outputs.matched_labels }} # Copy labels from the matched issue
-          assignees: ${{ steps.find-issue.outputs.matched_assignees }} # Copy assignees from the matched issue
+          labels: "${{ steps.find-issue.outputs.matched_labels }}"
+          assignees: "${{ steps.find-issue.outputs.matched_assignees }}"
           draft: true
