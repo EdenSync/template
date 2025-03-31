@@ -1,6 +1,9 @@
 ---
 name: Add new issues to Org Project
 
+permissions:
+  contents: read  # Only read access to repo contents
+
 on:
   issues:
     types:
@@ -12,7 +15,15 @@ jobs:
     name: Add issue to Org project
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/add-to-project@RELEASE_VERSION
+      - name: Get Organization Name
+        id: get-org-name
+        run: |
+          # Extract the organization name dynamically from GITHUB_REPOSITORY
+          ORG_NAME=$(echo "${GITHUB_REPOSITORY}" | cut -d'/' -f1)
+          echo "ORG_NAME=${ORG_NAME}" >> $GITHUB_ENV
+
+      - name: Add issue to Org project
+        uses: actions/add-to-project@RELEASE_VERSION
         with:
-          project-url: https://github.com/orgs/<orgName>/projects/<projectNumber>
+          project-url: https://github.com/orgs/${{ env.ORG_NAME }}/projects/2
           github-token: ${{ secrets.GITHUB_TOKEN }}
