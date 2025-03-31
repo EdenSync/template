@@ -45,7 +45,7 @@ jobs:
           ISSUE_BRANCH_NAME="${BRANCH_NAME#development/}"
           echo "Branch Name: $BRANCH_NAME"
           # Clean the branch name (remove spaces and hyphens)
-          CLEAN_BRANCH_NAME=$(echo "$ISSUE_BRANCH_NAME" | tr -d '[:space:]-')
+          CLEAN_BRANCH_NAME=$(echo "$ISSUE_BRANCH_NAME" | tr -d '[:space:]-' | tr '[:upper:]' '[:lower:]')
           echo "Cleaned Branch Name: $CLEAN_BRANCH_NAME"
 
           # Get list of issues
@@ -63,7 +63,7 @@ jobs:
             ISSUE_NUMBER=$(echo "$ISSUE" | jq -r '.number')
             ISSUE_LABELS=$(echo "$ISSUE" | jq -c '[.labels[].name] | join(",")')
             ISSUE_ASSIGNEES=$(echo "$ISSUE" | jq -c '[.assignees[].login] | join(",")')
-            CLEAN_ISSUE_TITLE="${ISSUE_NUMBER}$(echo "$ISSUE_TITLE" | tr -d '[:space:]-')"
+            CLEAN_ISSUE_TITLE="${ISSUE_NUMBER}$(echo "$ISSUE_TITLE" | tr -d '[:space:]-' | tr '[:upper:]' '[:lower:]')"
             echo "Cleaned Issue Title: $CLEAN_ISSUE_TITLE"
             if [[ "$CLEAN_BRANCH_NAME" =~ "$CLEAN_ISSUE_TITLE" ]]; then
               MATCHED_ISSUE="$ISSUE_NUMBER"
