@@ -63,8 +63,7 @@ jobs:
             ISSUE_NUMBER=$(echo "$ISSUE" | jq -r '.number')
             ISSUE_LABELS=$(echo "$ISSUE" | jq -c '[.labels[].name] | join(",")')
             ISSUE_ASSIGNEES=$(echo "$ISSUE" | jq -c '[.assignees[].login] | join(",")')
-
-            CLEAN_ISSUE_TITLE=$(echo "$ISSUE_TITLE" | tr -d '[:space:]-')
+            CLEAN_ISSUE_TITLE="${ISSUE_NUMBER}$(echo "$ISSUE_TITLE" | tr -d '[:space:]-')"
             echo "Cleaned Issue Title: $CLEAN_ISSUE_TITLE"
             if [[ "$CLEAN_BRANCH_NAME" =~ "$CLEAN_ISSUE_TITLE" ]]; then
               MATCHED_ISSUE="$ISSUE_NUMBER"
