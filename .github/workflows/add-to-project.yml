@@ -8,6 +8,7 @@ on:
   issues:
     types:
       - opened
+      - reopened
 
 jobs:
   add-to-project:
@@ -23,7 +24,7 @@ jobs:
           echo "ORG_NAME=${ORG_NAME}" >> "$GITHUB_ENV"
 
       - name: Add issue to Org project
-        uses: actions/add-to-project@v1
+        uses: actions/add-to-project@v1.0.2
         with:
           project-url: https://github.com/orgs/${{ env.ORG_NAME }}/projects/2
           github-token: ${{ secrets.GITHUB_TOKEN }}
