@@ -3,7 +3,6 @@ name: Auto Create Pull Request
 
 on:
   create:
-    branches:
 
 jobs:
   create-pr:
@@ -21,7 +20,7 @@ jobs:
             "https://api.github.com/repos/${{ github.repository }}/issues?state=open")
 
           # Parse issues and output them as a JSON object
-          echo "::set-output name=issues::$issues"
+          echo "issues=$issues" >> $GITHUB_OUTPUT
 
       - name: Find matching issue for PR
         id: find-issue
@@ -68,10 +67,10 @@ jobs:
           done
 
           # Output the matched issue number, title, labels, and assignees
-          echo "::set-output name=matched_issue::$MATCHED_ISSUE"
-          echo "::set-output name=matched_title::$MATCHED_TITLE"
-          echo "::set-output name=matched_labels::$MATCHED_LABELS"
-          echo "::set-output name=matched_assignees::$MATCHED_ASSIGNEES"
+          echo "matched_issue=$MATCHED_ISSUE" >> $GITHUB_OUTPUT
+          echo "matched_title=$MATCHED_TITLE" >> $GITHUB_OUTPUT
+          echo "matched_labels=$MATCHED_LABELS" >> $GITHUB_OUTPUT
+          echo "matched_assignees=$MATCHED_ASSIGNEES" >> $GITHUB_OUTPUT
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v7

@@ -1,0 +1,4 @@
+extends: default
+
+rules:
+  line-length: disable # Disable the line-length rule to avoid line length checks
