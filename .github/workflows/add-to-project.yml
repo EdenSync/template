@@ -14,13 +14,13 @@ jobs:
     name: Add issue to Org project
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Get Organization Name
         id: get-org-name
         run: |
           # Extract the organization name dynamically from GITHUB_REPOSITORY
           ORG_NAME="${GITHUB_REPOSITORY%%/*}"
-          echo "ORG_NAME=${ORG_NAME}" >> $GITHUB_ENV
+          echo "ORG_NAME=${ORG_NAME}" >> "$GITHUB_ENV"
 
       - name: Add issue to Org project
         uses: actions/add-to-project@RELEASE_VERSION
