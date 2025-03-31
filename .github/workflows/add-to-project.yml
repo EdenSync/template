@@ -1,9 +1,6 @@
 ---
 name: Add new issues to Org Project
 
-permissions:
-  contents: read
-
 on:
   issues:
     types:
