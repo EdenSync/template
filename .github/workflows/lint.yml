@@ -9,30 +9,29 @@ permissions:
   contents: read
 
 jobs:
-  build:
-    name: Lint
-    runs-on: ubuntu-latest
+  # build:
+  #   name: Lint
+  #   runs-on: ubuntu-latest
 
-    permissions:
-      contents: read
-      packages: read
-      # To report GitHub Actions status checks
-      statuses: write
+  #   permissions:
+  #     contents: read
+  #     packages: read
+  #     # To report GitHub Actions status checks
+  #     statuses: write
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          # super-linter needs the full git history to get the
-          # list of files that changed across commits
-          fetch-depth: 0
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
+  #       with:
+  #         # super-linter needs the full git history to get the
+  #         # list of files that changed across commits
+  #         fetch-depth: 0
 
-      - name: Super-linter
-        uses: super-linter/super-linter/slim@v7.3.0 # x-release-please-version
-        env:
-          # To report GitHub Actions status checks
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+  #     - name: Super-linter
+  #       uses: super-linter/super-linter/slim@v7.3.0 # x-release-please-version
+  #       env:
+  #         # To report GitHub Actions status checks
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   fix-lint-issues:
     permissions:
       # To write linting fixes
@@ -59,7 +58,7 @@ jobs:
         # - Pull requests
         # - Not on the default branch
         if: >
-          github.event.action == 'synchronize' &&
+          github.event_name == 'pull_request' &&
           github.ref_name != github.event.repository.default_branch
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
