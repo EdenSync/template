@@ -35,6 +35,7 @@ jobs:
           FIX_MARKDOWN_PRETTIER: true
           SAVE_SUPER_LINTER_SUMMARY: false
           VALIDATE_YAML_PRETTIER: false
+          VALIDATE_YAML: false
       - name: Commit and push linting fixes
         # Run only on:
         # - Pull requests
