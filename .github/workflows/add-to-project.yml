@@ -3,18 +3,18 @@ name: Add new issues to Org Project
 
 permissions:
   contents: read
-  
+
 on:
   issues:
     types:
       - opened
-      - transferred
 
 jobs:
   add-to-project:
     name: Add issue to Org project
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v2
       - name: Get Organization Name
         id: get-org-name
         run: |
